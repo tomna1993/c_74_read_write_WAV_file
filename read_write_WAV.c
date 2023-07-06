@@ -20,5 +20,16 @@ int main(int argc, char **argv)
     strcpy_s (output, MAX_ARGV_LENGTH, argv[2]);
     strcpy_s (factor, MAX_ARGV_LENGTH, argv[3]);
 
+    // Open audio file
+    FILE *fp = fopen(input, "rb");
+
+    if (fp == NULL)
+    {
+        printf ("File cannot be opened!\n");
+        return EXIT_FAILURE;
+    }
+
+    fclose(fp);
+
     return EXIT_SUCCESS;
 }
