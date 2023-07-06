@@ -6,6 +6,8 @@ Read and write WAV audio file's information. Change the audio volume and save th
 
 [Informations about WAV file structure](https://en.wikipedia.org/wiki/WAV)
 
+[Informations about WAV file header](https://docs.fileformat.com/audio/wav/)
+
 ### IMPLEMENTATION DETAILS
 
 - The program accepts three command-line arguments: 
