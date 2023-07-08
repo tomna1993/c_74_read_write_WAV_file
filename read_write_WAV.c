@@ -59,6 +59,7 @@ wav_header;
 wav_header func_read_WAV_header(char file_name[MAX_ARGV_LENGTH]);
 void func_print_WAV_header(wav_header WAV_head);
 __int8 func_read_audio_data(char file_name[MAX_ARGV_LENGTH], wav_header WAV_head, __int16 *audio_data);
+__int8 func_write_WAV(char output_file_name[MAX_ARGV_LENGTH], wav_header WAV_head, __int16 *audio_data);
 
 
 
@@ -105,6 +106,17 @@ int main(int argc, char **argv)
         audio_data = NULL;
 
         printf ("Failed to read audio data!\n");
+        return EXIT_FAILURE;
+    }
+
+    is_Error = func_write_WAV(output, WAV_head, audio_data);
+
+    if (is_Error == EXIT_FAILURE)
+    {
+        free(audio_data);
+        audio_data = NULL;
+
+        printf ("Failed to open file or write audio data!\n");
         return EXIT_FAILURE;
     }
 
@@ -254,6 +266,67 @@ __int8 func_read_audio_data(char file_name[MAX_ARGV_LENGTH], wav_header WAV_head
     return EXIT_SUCCESS;
 }
 
+__int8 func_write_WAV(char output_file_name[MAX_ARGV_LENGTH], wav_header WAV_head, __int16 *audio_data)
+{
+    // Open audio file
+    FILE *fp = fopen(output_file_name, "wb");
 
+    if (fp == NULL)
+    {
+        printf ("File cannot be opened!\n");
+        WAV_head.Is_Valid_WAV_header = false;
+        return EXIT_FAILURE;
+    }
+
+    // “RIFF” (4 byte) - Marks the file as a riff file.
+    fwrite (&WAV_head.RIFF, sizeof(char), 4, fp);
+
+    // File size in bytes (32-bit integer).
+    fwrite (&WAV_head.File_size, sizeof(__int32), 1, fp);
+
+    // “WAVE” (4 bytes) - File Type Header. 
+    // For our purposes, it always equals “WAVE”.
+    fwrite (&WAV_head.File_type_header, sizeof(char), 4, fp);
+
+    // “fmt " (4 bytes) - Format chunk marker. Includes trailing null
+    fwrite (&WAV_head.fmt, sizeof(char), 4, fp);
+
+    // Length of format data / Chunk size: 16, 18 or 40
+    fwrite (&WAV_head.Format_data_length, sizeof(__int32), 1, fp);
+
+    // Type of format (1 is PCM) - 2 byte integer
+    fwrite (&WAV_head.Format_type, sizeof(__int16), 1, fp);
+
+    // Number of Channels - 2 byte integer 
+    fwrite (&WAV_head.Num_of_channels, sizeof(__int16), 1, fp);
+
+    // Sample Rate - 32 byte integer. Common values are 44100 (CD), 48000 (DAT). 
+    //Sample Rate = Number of Samples per second, or Hertz.
+    fwrite (&WAV_head.Sample_rate, sizeof(__int32), 1, fp);
+
+    // Data rate = (Sample Rate * BitsPerSample * Channels) / 8; AvgBytesPerSec
+    fwrite (&WAV_head.Data_rate, sizeof(__int32), 1, fp);
+
+    // Data block size (bytes) = (BitsPerSample * Channels) / 8
+    fwrite (&WAV_head.Data_block_size, sizeof(__int16), 1, fp);
+
+    // Bits per sample
+    fwrite (&WAV_head.Bits_per_sample, sizeof(__int16), 1, fp);
+
+    // “data” (4 bytes) chunk header. Marks the beginning of the data section.
+    fwrite (&WAV_head.Data, sizeof(char), 4, fp);
+
+    // Size of the data section.
+    fwrite (&WAV_head.Data_size, sizeof(__int32), 1, fp);
+
+    for (__int32 i = 0, length = WAV_head.Data_size / 2; i < length; i++)
+    {
+        fwrite (audio_data + i, sizeof(__int16), 1, fp);
+    }
+
+    fclose(fp);
+
+    return EXIT_SUCCESS;
+}
 
 
