@@ -58,6 +58,8 @@ wav_header;
 
 wav_header func_read_WAV_header(char file_name[MAX_ARGV_LENGTH]);
 void func_print_WAV_header(wav_header WAV_head);
+__int8 func_read_audio_data(char file_name[MAX_ARGV_LENGTH], wav_header WAV_head, __int16 *audio_data);
+
 
 
 int main(int argc, char **argv)
@@ -85,6 +87,29 @@ int main(int argc, char **argv)
     }
 
     func_print_WAV_header(WAV_head);
+
+     // Data size means how much bytes are in the audio data section
+    __int16 *audio_data = calloc((WAV_head.Data_size / 2), sizeof(__int16));
+
+    if (audio_data == NULL)
+    {
+        printf ("Memory allocation failed!\n");
+        return EXIT_FAILURE;
+    }
+
+    __int8 is_Error = func_read_audio_data(input, WAV_head, audio_data);
+
+    if (is_Error == EXIT_FAILURE)
+    {
+        free(audio_data);
+        audio_data = NULL;
+
+        printf ("Failed to read audio data!\n");
+        return EXIT_FAILURE;
+    }
+
+    free(audio_data);
+    audio_data = NULL;
 
     return EXIT_SUCCESS;
 }
@@ -195,3 +220,40 @@ void func_print_WAV_header(wav_header WAV_head)
     // Size of the data section.
     printf ("Size of the data section: %i\n", WAV_head.Data_size);
 }
+
+__int8 func_read_audio_data(char file_name[MAX_ARGV_LENGTH], wav_header WAV_head, __int16 *audio_data)
+{
+    // Open audio file
+    FILE *fp = fopen(file_name, "rb");
+
+    if (fp == NULL)
+    {
+        printf ("File cannot be opened!\n");
+        return EXIT_FAILURE;
+    }
+
+    fseek(fp, 44, SEEK_CUR);
+
+    for (__int32 i = 0, length = WAV_head.Data_size / 2; i < length; i++)
+    {
+        fread (audio_data + i, sizeof(__int16), 1, fp);
+    }
+
+    fclose(fp);
+
+    for (__int32 i = 0, length = WAV_head.Data_size / 2; i < length; i++)
+    {
+        if (i != 0 && i % 16 == 0)
+        {
+            printf ("\n");
+        }
+
+        printf ("%x ", *(audio_data + i));
+    }
+
+    return EXIT_SUCCESS;
+}
+
+
+
+
