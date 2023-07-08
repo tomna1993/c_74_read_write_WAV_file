@@ -59,6 +59,7 @@ wav_header;
 wav_header func_read_WAV_header(char file_name[MAX_ARGV_LENGTH]);
 void func_print_WAV_header(wav_header WAV_head);
 __int8 func_read_audio_data(char file_name[MAX_ARGV_LENGTH], wav_header WAV_head, __int16 *audio_data);
+void func_change_audio_volume(wav_header WAV_head, __int16 *audio_data, float factor);
 __int8 func_write_WAV(char output_file_name[MAX_ARGV_LENGTH], wav_header WAV_head, __int16 *audio_data);
 
 
@@ -73,11 +74,13 @@ int main(int argc, char **argv)
 
     char input[MAX_ARGV_LENGTH] = { "" };
     char output[MAX_ARGV_LENGTH] = { "" };
-    char factor[MAX_ARGV_LENGTH] = { "" };
+    char factor_char[MAX_ARGV_LENGTH] = { "" };
 
     strcpy_s (input, MAX_ARGV_LENGTH, argv[1]);
     strcpy_s (output, MAX_ARGV_LENGTH, argv[2]);
-    strcpy_s (factor, MAX_ARGV_LENGTH, argv[3]);
+    strcpy_s (factor_char, MAX_ARGV_LENGTH, argv[3]);
+
+    float factor = atof(factor_char);
 
     wav_header WAV_head = func_read_WAV_header(input);
 
@@ -108,6 +111,8 @@ int main(int argc, char **argv)
         printf ("Failed to read audio data!\n");
         return EXIT_FAILURE;
     }
+
+    func_change_audio_volume(WAV_head, audio_data, factor);
 
     is_Error = func_write_WAV(output, WAV_head, audio_data);
 
@@ -264,6 +269,14 @@ __int8 func_read_audio_data(char file_name[MAX_ARGV_LENGTH], wav_header WAV_head
     }
 
     return EXIT_SUCCESS;
+}
+
+void func_change_audio_volume(wav_header WAV_head, __int16 *audio_data, float factor)
+{
+    for (__int32 i = 0, length = WAV_head.Data_size / 2; i < length; i++)
+    {
+        *(audio_data + i) = (__int16)(*(audio_data + i) * factor);
+    }
 }
 
 __int8 func_write_WAV(char output_file_name[MAX_ARGV_LENGTH], wav_header WAV_head, __int16 *audio_data)
