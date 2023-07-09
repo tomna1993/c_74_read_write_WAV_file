@@ -93,7 +93,9 @@ int main(int argc, char **argv)
 
     func_print_WAV_header(WAV_head);
 
-     // Data size means how much bytes are in the audio data section
+    // Data size means how much bytes are in the audio data section
+    // PCM audio data is 16 bit wide so I need to allocate half of the data size
+    // (80764 int8 / 2) = 40382 int16
     __int16 *audio_data = calloc((WAV_head.Data_size / 2), sizeof(__int16));
 
     if (audio_data == NULL)
@@ -252,7 +254,9 @@ __int8 func_read_audio_data(char file_name[MAX_ARGV_LENGTH], wav_header WAV_head
         return EXIT_FAILURE;
     }
 
+    // Audio data usually starts at the 45th byte
     fseek(fp, 44, SEEK_CUR);
+
 
     for (__int32 i = 0, length = WAV_head.Data_size / 2; i < length; i++)
     {
@@ -281,6 +285,8 @@ void func_change_audio_volume(wav_header WAV_head, __int16 *audio_data, float fa
 {
     for (__int32 i = 0, length = WAV_head.Data_size / 2; i < length; i++)
     {
+        // To change audio volume multiply the data with a factor
+        // Truncate the value to int16
         *(audio_data + i) = (__int16)(*(audio_data + i) * factor);
     }
 }
